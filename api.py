@@ -1,43 +1,65 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+#this is the priogram related to accseing the file for chrom using the http 
+from http.server import BaseHTTPRequestHandler,HTTPServer
+import pandas as pd
 import json
+def read(filename):
+    with open(filename,'r')as file:
+        data=file.read()
+    return data
 
-class SimpleAPI(BaseHTTPRequestHandler):
 
+class Get(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/":
+        if self.path=='/json':
             self.send_response(200)
-            self.send_header("Content-type", "application/json")
+            self.send_header('Content-type','application/json')
             self.end_headers()
-            response = {"message": "Welcome to the root endpoint!"}
-            self.wfile.write(json.dumps(response).encode())
-        elif self.path == "/hello":
+            repose=read('jsonfile.json')
+            self.wfile.write(repose.encode())
+        if self.path=='/excel':
             self.send_response(200)
-            self.send_header("Content-type", "application/json")
+            self.send_header('Content-type','application/json')
             self.end_headers()
-            response = {"message": "Hello, world!"}
-            self.wfile.write(json.dumps(response).encode())
+            response=pd.read_excel('ai.xlsx')
+            responses = response.to_json(orient='records')
+            self.wfile.write(responses.encode())
         else:
-            self.send_error(404, "Not Found")
-
+            self.send_response(404,'file not found')
     def do_POST(self):
-        if self.path == "/echo":
-            contant=int(self.headers.get('Content-Length',0))
-            body=self.rfile.read(contant)
-            data=json.loads(body)
+        if self.path == '/json/creat':
+            length = int(self.headers.get('Content-Length', 0))
+            data = self.rfile.read(length)
+            datamain = json.loads(data.decode('utf-8'))
+            datafinal=json.dumps(datamain)
 
+            with open('jsonfile.json', 'a') as f:
+                f.write(datafinal)
+            
             self.send_response(200)
-            self.send_header("Content-type", "application/json")
+            self.send_header('Content-type', 'application/json')
             self.end_headers()
-            response = {"you_sent": data}
-            self.wfile.write(json.dumps(response).encode())
+            self.wfile.write(json.dumps({"message": "The file is created"}).encode())
+        elif self.path=='/excel/create':
+            contant=int(self.headers.get('Content-Length',0))
+            data=self.rfile.read(contant)
+            excel=json.loads(data)
+            df=pd.DataFrame(excel)
+            with pd.ExcelWriter('ai.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+              df.to_excel(writer, sheet_name='Sheet1', index=False,header=False, startrow=writer.sheets['Sheet1'].max_row)
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"message": "The file is created"}).encode())
         else:
-            self.send_error(404, "Not Found")
+            self.send_response(404)
+            self.end_headers()
 
-def run(server_class=HTTPServer, handler_class=SimpleAPI, port=8000):
-    server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
-    print(f"Starting server on port {port}...")
-    httpd.serve_forever()
+def run(server=HTTPServer,clas=Get,port=8000):
+    address=('',8000)
+    start=server(address,clas)
+    print(f'server is started{port}')
+    start.serve_forever()
 
 if __name__ == "__main__":
     run()
+    
