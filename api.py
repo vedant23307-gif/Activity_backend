@@ -12,10 +12,15 @@ def read(filename):
 
 class Get(BaseHTTPRequestHandler): 
     def res(self,data):
-        self.send_response(200)
-        self.send_header('Content-type','application/json')
-        self.end_headers()
-        self.wfile.write(data.encode())
+        try:
+            self.send_response(200)
+            self.send_header('Content-type','application/json')
+            self.end_headers()
+            self.wfile.write(data.encode())
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(json.dumps("the exception is {e}".encode()))    
     def do_GET(self):
         if self.path=='/json':
             repose=json.dumps(read('jsonfile.json'))
@@ -31,11 +36,13 @@ class Get(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps("file not found".encode()))
             except pd.errors.EmptyDataError:
-                self.send_response(400,'the file is empty')
-                self.end_headers
+                self.send_response(400)
+                self.send_headers()
+                self.wfile.write(json.dumps("file is empty".encode()))
             except Exception as e:
-                self.send_response(500,'the excetion is{}',e)
+                self.send_response(500)
                 self.end_headers()
+                self.wfile.write(json.dumps("the exception is {e}".encode()))
         else:
             self.send_response(404,'file not found')
     def do_POST(self):
@@ -50,11 +57,13 @@ class Get(BaseHTTPRequestHandler):
                 message=json.dumps("the message get sucees fully")
                 self.res(message)
             except json.JSONDecodeError:
-                self.send_response(404,'file not found')
+                self.send_response(404)
                 self.end_headers()
+                self.wfile.write(json.dumps("there is problem in the json file youn send".encode()))
             except Exception as e:
                 self.send_response(500,'the excetion is{e}')
                 self.end_headers()
+                self.wfile.write(json.dumps("the exception is {e}".encode()))
         elif self.path=='/excel/create':
             try:
                 contant=int(self.headers.get('Content-Length',0))
@@ -68,12 +77,15 @@ class Get(BaseHTTPRequestHandler):
             except json.JSONDecodeError:
                 self.send_response(404,"FileNotFoundError")
                 self.end_headers()
+                self.wfile.write(json.dumps("there is problem in the json file youn send".encode()))
             except FileNotFoundError:
                 self.send_response(404,'file not found')
                 self.end_headers()
+                self.wfile.write(json.dumps("file not found".encode()))
             except Exception as e:
                 self.send_response(500,'the excetion is{e}',)
-                self.end_headers()               
+                self.end_headers() 
+                self.wfile.write(json.dumps("the exception is {e}".encode()))              
         else:
             self.send_response(404)
             self.end_headers()
