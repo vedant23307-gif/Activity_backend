@@ -9,9 +9,9 @@ def read(filename):
         return data
     except FileNotFoundError:
         return None
-
+#this class handel all the http requests
 class Get(BaseHTTPRequestHandler): 
-    def res(self,data):
+    def response(self,data):
         try:
             self.send_response(200)
             self.send_header('Content-type','application/json')
@@ -30,7 +30,7 @@ class Get(BaseHTTPRequestHandler):
             try:
                 response=pd.read_excel('ai.xlsx')
                 responses = response.to_json(orient='records')
-                self.res(responses)
+                self.response(responses)
             except FileNotFoundError:
                 self.send_response(404)
                 self.end_headers()
@@ -55,7 +55,7 @@ class Get(BaseHTTPRequestHandler):
                 with open('jsonfile.json', 'a') as f:
                     f.write(datafinal)
                 message=json.dumps("the message get sucees fully")
-                self.res(message)
+                self.response(message)
             except json.JSONDecodeError:
                 self.send_response(404)
                 self.end_headers()
@@ -73,7 +73,7 @@ class Get(BaseHTTPRequestHandler):
                 with pd.ExcelWriter('ai.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
                     df.to_excel(writer, sheet_name='Sheet1', index=False,header=False, startrow=writer.sheets['Sheet1'].max_row)
                 massage=json.dumps("the massage get sucesfully")
-                self.res(message)
+                self.response(message)
             except json.JSONDecodeError:
                 self.send_response(404,"FileNotFoundError")
                 self.end_headers()
